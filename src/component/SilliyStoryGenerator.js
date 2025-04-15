@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Sparkles, Loader } from "lucide-react";
+import { Sparkles, Loader, Share2, Save } from "lucide-react";
 
 const StoryGenerator = () => {
   const [story, setStory] = useState('');
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState('fantasy');
   const [length, setLength] = useState('short');
+  const [savedStories, setSavedStories] = useState([]);
 
   const themes = [
     { name: 'fantasy', emoji: '🧙‍♂️', color: 'from-purple-500 to-blue-500' },
@@ -26,19 +27,70 @@ const StoryGenerator = () => {
     try {
       setTimeout(() => {
         const stories = {
-          fantasy: "In a magical realm where crystals sang and trees danced, a young wizard named Luna discovered a mysterious glowing map...",
-          space: "Among the glittering stars of the Andromeda Galaxy, Captain Nova received an unexpected distress signal from a ship thought lost centuries ago...",
-          pirates: "The salty breeze carried whispers of a legendary treasure as Captain Jack's compass pointed to an island that wasn't on any map...",
-          jungle: "Deep in the emerald heart of the Amazon, a young explorer stumbled upon ancient ruins that seemed to pulse with forgotten magic...",
-          underwater: "Beneath the sapphire waves of the Pacific, a marine biologist made friends with a peculiar octopus that could solve complex puzzles..."
+          fantasy: {
+            short: "In a magical realm where crystals sang and trees danced, a young wizard named Luna discovered a mysterious glowing map...",
+            medium: "In a magical realm where crystals sang and trees danced, a young wizard named Luna discovered a mysterious glowing map. As she followed its shimmering path, she encountered talking animals and floating islands. The map led her to a hidden library where ancient spells were waiting to be discovered...",
+            long: "In a magical realm where crystals sang and trees danced, a young wizard named Luna discovered a mysterious glowing map. As she followed its shimmering path, she encountered talking animals and floating islands. The map led her to a hidden library where ancient spells were waiting to be discovered. With each spell she learned, new realms opened before her eyes. She befriended a dragon who had lost its memory and together they embarked on a quest to restore the balance of magic in their world..."
+          },
+          space: {
+            short: "Among the glittering stars of the Andromeda Galaxy, Captain Nova received an unexpected distress signal from a ship thought lost centuries ago...",
+            medium: "Among the glittering stars of the Andromeda Galaxy, Captain Nova received an unexpected distress signal from a ship thought lost centuries ago. As she navigated through asteroid fields and space anomalies, she discovered a hidden civilization that had mastered time travel...",
+            long: "Among the glittering stars of the Andromeda Galaxy, Captain Nova received an unexpected distress signal from a ship thought lost centuries ago. As she navigated through asteroid fields and space anomalies, she discovered a hidden civilization that had mastered time travel. This discovery led to a series of events that would change the course of human history. Nova had to make difficult choices between preserving the timeline and saving countless lives..."
+          },
+          pirates: {
+            short: "The salty breeze carried whispers of a legendary treasure as Captain Jack's compass pointed to an island that wasn't on any map...",
+            medium: "The salty breeze carried whispers of a legendary treasure as Captain Jack's compass pointed to an island that wasn't on any map. His crew was skeptical, but the promise of gold was too tempting. As they approached the mysterious island, they noticed strange lights in the water...",
+            long: "The salty breeze carried whispers of a legendary treasure as Captain Jack's compass pointed to an island that wasn't on any map. His crew was skeptical, but the promise of gold was too tempting. As they approached the mysterious island, they noticed strange lights in the water. The island itself seemed to move with the tides. What they discovered was beyond their wildest dreams - a civilization of merfolk who had been protecting the treasure for centuries..."
+          },
+          jungle: {
+            short: "Deep in the emerald heart of the Amazon, a young explorer stumbled upon ancient ruins that seemed to pulse with forgotten magic...",
+            medium: "Deep in the emerald heart of the Amazon, a young explorer stumbled upon ancient ruins that seemed to pulse with forgotten magic. The vines moved on their own, and the animals spoke in riddles. As she deciphered the ancient carvings, she realized she was chosen to protect a sacred secret...",
+            long: "Deep in the emerald heart of the Amazon, a young explorer stumbled upon ancient ruins that seemed to pulse with forgotten magic. The vines moved on their own, and the animals spoke in riddles. As she deciphered the ancient carvings, she realized she was chosen to protect a sacred secret. The jungle itself was alive, and it had chosen her to be its guardian. She had to learn to communicate with the ancient spirits and prevent a group of treasure hunters from exploiting the jungle's power..."
+          },
+          underwater: {
+            short: "Beneath the sapphire waves of the Pacific, a marine biologist made friends with a peculiar octopus that could solve complex puzzles...",
+            medium: "Beneath the sapphire waves of the Pacific, a marine biologist made friends with a peculiar octopus that could solve complex puzzles. Together, they discovered a hidden underwater city where sea creatures had developed their own advanced civilization. The octopus revealed that it was actually a scientist from this underwater world...",
+            long: "Beneath the sapphire waves of the Pacific, a marine biologist made friends with a peculiar octopus that could solve complex puzzles. Together, they discovered a hidden underwater city where sea creatures had developed their own advanced civilization. The octopus revealed that it was actually a scientist from this underwater world. The city was facing a crisis - their energy source was depleting, and they needed human technology to survive. The biologist had to bridge the gap between two worlds while keeping their existence a secret..."
+          }
         };
-        setStory(stories[theme]);
+        setStory(stories[theme][length]);
         setLoading(false);
       }, 1500);
     } catch (error) {
       setLoading(false);
       console.error('Error generating story:', error);
     }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'My Magical Story',
+        text: story,
+      }).catch(console.error);
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      const textArea = document.createElement('textarea');
+      textArea.value = story;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Story copied to clipboard!');
+    }
+  };
+
+  const handleSave = () => {
+    const newStory = {
+      id: Date.now(),
+      theme,
+      length,
+      content: story,
+      date: new Date().toLocaleDateString()
+    };
+    setSavedStories([...savedStories, newStory]);
+    localStorage.setItem('savedStories', JSON.stringify([...savedStories, newStory]));
+    alert('Story saved successfully!');
   };
 
   return (
@@ -64,12 +116,16 @@ const StoryGenerator = () => {
                 onClick={() => setTheme(t.name)}
                 className={`p-4 rounded-lg bg-gradient-to-r ${t.color} 
                   transform hover:scale-105 transition-all duration-200
-                  ${theme === t.name ? 'ring-4 ring-white ring-opacity-60' : ''}`
-                }
+                  ${theme === t.name ? 'ring-4 ring-white ring-opacity-60 scale-105' : 'opacity-80 hover:opacity-100'}`}
               >
                 <div className="text-white text-center">
                   <div className="text-2xl mb-2">{t.emoji}</div>
                   <div className="capitalize">{t.name}</div>
+                  {theme === t.name && (
+                    <div className="mt-2 text-sm font-semibold bg-white/20 rounded-full px-2 py-1">
+                      Selected
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
@@ -124,11 +180,17 @@ const StoryGenerator = () => {
               <p className="text-lg leading-relaxed">{story}</p>
             </div>
             <div className="mt-6 flex gap-4">
-              <button className="px-4 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors">
-                Share Story 📤
+              <button 
+                onClick={handleShare}
+                className="px-4 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors flex items-center gap-2"
+              >
+                <Share2 className="w-4 h-4" /> Share Story
               </button>
-              <button className="px-4 py-2 rounded-lg bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors">
-                Save Story 💾
+              <button 
+                onClick={handleSave}
+                className="px-4 py-2 rounded-lg bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" /> Save Story
               </button>
             </div>
           </div>
